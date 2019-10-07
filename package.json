@@ -34,6 +34,8 @@
   },
   "devDependencies": {
     "@react-native-community/bob": "^0.7.0",
+    "@types/react": "^16.9.5",
+    "@types/react-native": "^0.60.19",
     "babel-cli": "^6.6.5",
     "babel-eslint": "^7.2.1",
     "eslint": "^3.19.0",

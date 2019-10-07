@@ -598,6 +598,27 @@
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-12.7.11.tgz#be879b52031cfb5d295b047f5462d8ef1a716446"
   integrity sha1-voebUgMc+10pWwR/VGLY7xpxZEY=
 
+"@types/prop-types@*":
+  version "15.7.3"
+  resolved "https://registry.npm.taobao.org/@types/prop-types/download/@types/prop-types-15.7.3.tgz#2ab0d5da2e5815f94b0b9d4b95d1e5f243ab2ca7"
+  integrity sha1-KrDV2i5YFflLC51LldHl8kOrLKc=
+
+"@types/react-native@^0.60.19":
+  version "0.60.19"
+  resolved "https://registry.npm.taobao.org/@types/react-native/download/@types/react-native-0.60.19.tgz#4d58516f9e981c3f477ad48727331e31a0792aae"
+  integrity sha1-TVhRb56YHD9HetSHJzMeMaB5Kq4=
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/react" "*"
+
+"@types/react@*", "@types/react@^16.9.5":
+  version "16.9.5"
+  resolved "https://registry.npm.taobao.org/@types/react/download/@types/react-16.9.5.tgz#079dabd918b19b32118c25fd00a786bb6d0d5e51"
+  integrity sha1-B52r2RixmzIRjCX9AKeGu20NXlE=
+  dependencies:
+    "@types/prop-types" "*"
+    csstype "^2.2.0"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.npm.taobao.org/abbrev/download/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -2155,6 +2176,11 @@ csrf@~3.0.0:
     rndm "1.2.0"
     tsscmp "1.0.5"
     uid-safe "2.1.4"
+
+csstype@^2.2.0:
+  version "2.6.7"
+  resolved "https://registry.npm.taobao.org/csstype/download/csstype-2.6.7.tgz#20b0024c20b6718f4eda3853a1f5a1cce7f5e4a5"
+  integrity sha1-ILACTCC2cY9O2jhTofWhzOf15KU=
 
 csurf@~1.8.3:
   version "1.8.3"

@@ -9,6 +9,13 @@ import {
   Easing,
   ViewPropTypes,
   I18nManager,
+  ImageSourcePropType,
+  StyleProp,
+  ViewStyle,
+  PanResponderInstance,
+  LayoutChangeEvent,
+  GestureResponderEvent,
+  PanResponderGestureState,
 } from 'react-native';
 
 import PropTypes from 'prop-types';
@@ -42,13 +49,146 @@ const DEFAULT_ANIMATION_CONFIGS = {
     easing: Easing.inOut(Easing.ease),
     delay: 0,
   },
-  // decay : { // This has a serious bug
-  //   velocity     : 1,
-  //   deceleration : 0.997
-  // }
 };
 
-export default class Slider extends PureComponent {
+interface SliderProps {
+  /**
+   * Initial value of the slider. The value should be between minimumValue
+   * and maximumValue, which default to 0 and 1 respectively.
+   * Default value is 0.
+   *
+   * *This is not a controlled component*, e.g. if you don't update
+   * the value, the component won't be reset to its inital value.
+   */
+  value?: number;
+
+  /**
+   * If true the user won't be able to move the slider.
+   * Default value is false.
+   */
+  disabled: boolean;
+
+  /**
+   * Initial minimum value of the slider. Default value is 0.
+   */
+  minimumValue?: number;
+
+  /**
+   * Initial maximum value of the slider. Default value is 1.
+   */
+  maximumValue?: number;
+
+  /**
+   * Step value of the slider. The value should be between 0 and
+   * (maximumValue - minimumValue). Default value is 0.
+   */
+  step?: number;
+
+  /**
+   * The color used for the track to the left of the button. Overrides the
+   * default blue gradient image.
+   */
+  minimumTrackTintColor?: string;
+
+  /**
+   * The color used for the track to the right of the button. Overrides the
+   * default blue gradient image.
+   */
+  maximumTrackTintColor?: string;
+
+  /**
+   * The color used for the thumb.
+   */
+  thumbTintColor?: string;
+
+  /**
+   * The size of the touch area that allows moving the thumb.
+   * The touch area has the same center has the visible thumb.
+   * This allows to have a visually small thumb while still allowing the user
+   * to move it easily.
+   * The default is {width: 40, height: 40}.
+   */
+  thumbTouchSize?: { width: number; height: number };
+
+  /**
+   * Callback continuously called while the user is dragging the slider.
+   */
+  onValueChange: (value: number) => void;
+
+  /**
+   * Callback called when the user starts changing the value (e.g. when
+   * the slider is pressed).
+   */
+  onSlidingStart?: (value: number) => void;
+
+  /**
+   * Callback called when the user finishes changing the value (e.g. when
+   * the slider is released).
+   */
+  onSlidingComplete?: (value: number) => void;
+
+  /**
+   * The style applied to the slider container.
+   */
+  style?: StyleProp<ViewStyle>
+
+  /**
+   * The style applied to the slider container.
+   */
+  styles?: StyleProp<ViewStyle>
+
+  /**
+   * The style applied to the track.
+   */
+  trackStyle?: StyleProp<ViewStyle>
+
+  /**
+   * The style applied to the thumb.
+   */
+  thumbStyle?: StyleProp<ViewStyle>
+
+  /**
+   * Sets an image for the thumb.
+   */
+  thumbImage?: ImageSourcePropType;
+
+  /**
+   * Set this to true to visually see the thumb touch rect in green.
+   */
+  debugTouchArea?: boolean;
+
+  /**
+   * Set to true to animate values with default 'timing' animation type
+   */
+  animateTransitions?: boolean;
+
+  /**
+   * Custom Animation type. 'spring' or 'timing'.
+   */
+  animationType?: 'spring' | 'timing';
+
+  /**
+   * Used to configure the animation parameters.  These are the same parameters in the Animated library.
+   */
+  animationConfig?: Animated.SpringAnimationConfig | Animated.TimingAnimationConfig;
+
+  renderThumb?: () => React.ComponentType;
+}
+
+interface Size {
+  width?: number;
+  height?: number;
+}
+
+interface SliderState {
+  containerSize: Size;
+  trackSize: Size;
+  thumbSize: Size;
+  allMeasured: boolean;
+  value: Animated.Value;
+}
+
+export default class Slider extends PureComponent<SliderProps, SliderState> {
   static propTypes = {
     /**
      * Initial value of the slider. The value should be between minimumValue
@@ -146,7 +286,7 @@ export default class Slider extends PureComponent {
     /**
      * Sets an image for the thumb.
      */
-    thumbImage: Image.propTypes.source,
+    thumbImage: PropTypes.string,
 
     /**
      * Set this to true to visually see the thumb touch rect in green.
@@ -167,6 +307,8 @@ export default class Slider extends PureComponent {
      * Used to configure the animation parameters.  These are the same parameters in the Animated library.
      */
     animationConfig: PropTypes.object,
+
+    renderThumb: PropTypes.func,
   };
 
   static defaultProps = {
@@ -182,13 +324,26 @@ export default class Slider extends PureComponent {
     animationType: 'timing',
   };
 
-  state = {
-    containerSize: { width: 0, height: 0 },
-    trackSize: { width: 0, height: 0 },
-    thumbSize: { width: 0, height: 0 },
-    allMeasured: false,
-    value: new Animated.Value(this.props.value),
-  };
+  private _panResponder: PanResponderInstance;
+
+  private _previousLeft: number;
+
+  private _containerSize: Size;
+
+  private _trackSize: Size;
+
+  private _thumbSize: Size;
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      containerSize: { width: 0, height: 0 },
+      trackSize: { width: 0, height: 0 },
+      thumbSize: { width: 0, height: 0 },
+      allMeasured: false,
+      value: new Animated.Value(this.props.value),
+    };
+  }
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
@@ -240,7 +395,7 @@ export default class Slider extends PureComponent {
       thumbSize,
       allMeasured,
     } = this.state;
-    const mainStyles = styles || defaultStyles;
+    const mainStyles = Object.assign({}, styles, defaultStyles);
     const thumbLeft = value.interpolate({
       inputRange: [minimumValue, maximumValue],
       outputRange: I18nManager.isRTL
@@ -253,7 +408,7 @@ export default class Slider extends PureComponent {
       outputRange: [0, containerSize.width - thumbSize.width],
       // extrapolate: 'clamp',
     });
-    const valueVisibleStyle = {};
+    const valueVisibleStyle: { opacity?: number } = {};
     if (!allMeasured) {
       valueVisibleStyle.opacity = 0;
     }
@@ -329,7 +484,7 @@ export default class Slider extends PureComponent {
   }
 
   _handleStartShouldSetPanResponder = (
-    e: Object /* gestureState: Object */,
+    e: GestureResponderEvent /* gestureState: Object */,
   ): boolean =>
     // Should we become active when the user presses down on the thumb?
     this._thumbHitTest(e);
@@ -344,7 +499,7 @@ export default class Slider extends PureComponent {
     this._fireChangeEvent('onSlidingStart');
   };
 
-  _handlePanResponderMove = (e: Object, gestureState: Object) => {
+  _handlePanResponderMove = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
     if (this.props.disabled) {
       return;
     }
@@ -353,12 +508,12 @@ export default class Slider extends PureComponent {
     this._fireChangeEvent('onValueChange');
   };
 
-  _handlePanResponderRequestEnd(e: Object, gestureState: Object) {
+  _handlePanResponderRequestEnd(e: GestureResponderEvent, gestureState: PanResponderGestureState) {
     // Should we allow another component to take over this pan?
     return false;
   }
 
-  _handlePanResponderEnd = (e: Object, gestureState: Object) => {
+  _handlePanResponderEnd = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
     if (this.props.disabled) {
       return;
     }
@@ -367,20 +522,20 @@ export default class Slider extends PureComponent {
     this._fireChangeEvent('onSlidingComplete');
   };
 
-  _measureContainer = (x: Object) => {
-    this._handleMeasure('containerSize', x);
+  _measureContainer = (layout: LayoutChangeEvent) => {
+    this._handleMeasure('containerSize', layout);
   };
 
-  _measureTrack = (x: Object) => {
-    this._handleMeasure('trackSize', x);
+  _measureTrack = (layout: LayoutChangeEvent) => {
+    this._handleMeasure('trackSize', layout);
   };
 
-  _measureThumb = (x: Object) => {
-    this._handleMeasure('thumbSize', x);
+  _measureThumb = (layout: LayoutChangeEvent) => {
+    this._handleMeasure('thumbSize', layout);
   };
 
-  _handleMeasure = (name: string, x: Object) => {
-    const { width, height } = x.nativeEvent.layout;
+  _handleMeasure = (name: string, layout: LayoutChangeEvent) => {
+    const { width, height } = layout.nativeEvent.layout;
     const size = { width, height };
 
     const storeName = `_${name}`;
@@ -416,7 +571,7 @@ export default class Slider extends PureComponent {
     );
   };
 
-  _getValue = (gestureState: Object) => {
+  _getValue = (gestureState: PanResponderGestureState) => {
     const length = this.state.containerSize.width - this.state.thumbSize.width;
     const thumbLeft = this._previousLeft + gestureState.dx;
 
@@ -478,7 +633,7 @@ export default class Slider extends PureComponent {
     const state = this.state;
     const props = this.props;
 
-    const size = {};
+    const size: Size = {};
     if (state.allMeasured === true) {
       size.width = Math.max(
         0,
@@ -496,7 +651,7 @@ export default class Slider extends PureComponent {
   _getTouchOverflowStyle = () => {
     const { width, height } = this._getTouchOverflowSize();
 
-    const touchOverflowStyle = {};
+    const touchOverflowStyle: StyleProp<ViewStyle> = {};
     if (width !== undefined && height !== undefined) {
       const verticalMargin = -height / 2;
       touchOverflowStyle.marginTop = verticalMargin;
@@ -515,7 +670,7 @@ export default class Slider extends PureComponent {
     return touchOverflowStyle;
   };
 
-  _thumbHitTest = (e: Object) => {
+  _thumbHitTest = (e: GestureResponderEvent) => {
     const nativeEvent = e.nativeEvent;
     const thumbTouchRect = this._getThumbTouchRect();
     return thumbTouchRect.containsPoint(
@@ -570,7 +725,7 @@ export default class Slider extends PureComponent {
   };
 }
 
-var defaultStyles = StyleSheet.create({
+const defaultStyles = StyleSheet.create({
   container: {
     height: 40,
     justifyContent: 'center',
