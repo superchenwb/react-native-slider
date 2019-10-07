@@ -23,21 +23,27 @@ import PropTypes from 'prop-types';
 const TRACK_SIZE = 4;
 const THUMB_SIZE = 20;
 
-function Rect(this: any, x: number, y: number, width: number, height: number) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-}
+class Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  constructor(x: number, y: number, width: number, height: number) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
 
-Rect.prototype.containsPoint = function(x: number, y: number) {
-  return (
-    x >= this.x &&
-    y >= this.y &&
-    x <= this.x + this.width &&
-    y <= this.y + this.height
-  );
-};
+  containsPoint(x: number, y: number) {
+    return (
+      x >= this.x &&
+      y >= this.y &&
+      x <= this.x + this.width &&
+      y <= this.y + this.height
+    );
+  }
+}
 
 const DEFAULT_ANIMATION_CONFIGS = {
   spring: {
@@ -176,8 +182,8 @@ interface SliderProps {
 }
 
 interface Size {
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
 }
 
 interface SliderState {
@@ -334,18 +340,15 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
 
   private _thumbSize: Size;
 
-  constructor(props) {
+  constructor(props: SliderProps) {
     super(props);
     this.state = {
       containerSize: { width: 0, height: 0 },
       trackSize: { width: 0, height: 0 },
       thumbSize: { width: 0, height: 0 },
       allMeasured: false,
-      value: new Animated.Value(this.props.value),
+      value: new Animated.Value(props.value || 0),
     };
-  }
-
-  componentWillMount() {
     this._panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
       onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
@@ -355,10 +358,18 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
       onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
     });
+    this._previousLeft = 0;
+    this._containerSize = {};
+    this._trackSize = {};
+    this._thumbSize = {};
   }
 
-  componentWillReceiveProps(nextProps) {
-    const newValue = nextProps.value;
+  componentWillMount() {
+    
+  }
+
+  componentWillReceiveProps(nextProps: SliderProps) {
+    const newValue = nextProps.value || 0;
 
     if (this.props.value !== newValue) {
       if (this.props.animateTransitions) {
@@ -371,8 +382,8 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
 
   render() {
     const {
-      minimumValue,
-      maximumValue,
+      minimumValue = 0,
+      maximumValue = 100,
       minimumTrackTintColor,
       maximumTrackTintColor,
       thumbTintColor,
@@ -623,7 +634,7 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
     Animated[animationType](this.state.value, animationConfig).start();
   };
 
-  _fireChangeEvent = event => {
+  _fireChangeEvent = (event: string) => {
     if (this.props[event]) {
       this.props[event](this._getCurrentValue());
     }
@@ -633,8 +644,8 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
     const state = this.state;
     const props = this.props;
 
-    const size: Size = {};
-    if (state.allMeasured === true) {
+    const size: Size = { };
+    if (state.allMeasured === true && props.thumbTouchSize) {
       size.width = Math.max(
         0,
         props.thumbTouchSize.width - state.thumbSize.width,
@@ -695,7 +706,7 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
     );
   };
 
-  _renderDebugThumbTouchRect = thumbLeft => {
+  _renderDebugThumbTouchRect = (thumbLeft: number) => {
     const thumbTouchRect = this._getThumbTouchRect();
     const positionStyle = {
       left: thumbLeft,
