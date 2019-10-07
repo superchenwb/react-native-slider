@@ -20,7 +20,7 @@
     "clean": "rimraf lib",
     "start": "node_modules/react-native/packager/packager.sh",
     "build": "babel src --out-dir lib",
-    "prepublish": "npm run clean && npm run build"
+    "prepare": "bob build"
   },
   "repository": {
     "type": "git",
@@ -36,6 +36,16 @@
     "eslint-plugin-react": "^6.10.3",
     "react": "16.0.0-alpha.6",
     "react-native": "0.43.3",
-    "rimraf": "^2.5.2"
+    "rimraf": "^2.5.2",
+    "@react-native-community/bob": "^0.4.1",
+  },
+  "@react-native-community/bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
   }
 }
