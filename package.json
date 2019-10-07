@@ -33,6 +33,7 @@
     "prop-types": "^15.5.6"
   },
   "devDependencies": {
+    "@react-native-community/bob": "^0.7.0",
     "babel-cli": "^6.6.5",
     "babel-eslint": "^7.2.1",
     "eslint": "^3.19.0",
@@ -40,7 +41,7 @@
     "react": "16.0.0-alpha.6",
     "react-native": "0.43.3",
     "rimraf": "^2.5.2",
-    "@react-native-community/bob": "^0.7.0"
+    "typescript": "^3.6.3"
   },
   "@react-native-community/bob": {
     "source": "src",
