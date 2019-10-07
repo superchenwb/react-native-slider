@@ -23,14 +23,14 @@ import PropTypes from 'prop-types';
 const TRACK_SIZE = 4;
 const THUMB_SIZE = 20;
 
-function Rect(x, y, width, height) {
+function Rect(this: any, x: number, y: number, width: number, height: number) {
   this.x = x;
   this.y = y;
   this.width = width;
   this.height = height;
 }
 
-Rect.prototype.containsPoint = function(x, y) {
+Rect.prototype.containsPoint = function(x: number, y: number) {
   return (
     x >= this.x &&
     y >= this.y &&
