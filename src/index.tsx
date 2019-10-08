@@ -542,7 +542,7 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
         return false;
     }
 
-    _handlePanResponderEnd = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+    _handlePanResponderEnd = (_e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
         if (this.props.disabled) {
             return;
         }
