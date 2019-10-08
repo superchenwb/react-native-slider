@@ -528,7 +528,7 @@ export default class Slider extends PureComponent<SliderProps, SliderState> {
         this._fireChangeEvent(EventEnum.onSlidingStart);
     };
 
-    _handlePanResponderMove = (e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+    _handlePanResponderMove = (_e: GestureResponderEvent, gestureState: PanResponderGestureState) => {
         if (this.props.disabled) {
             return;
         }
